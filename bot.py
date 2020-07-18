@@ -1,6 +1,7 @@
 from telegram.ext import Updater, CommandHandler
 from timerbot import MedicineTimerBot
 from timezonebot import TimeZoneHandler
+from database_handler import DatabaseHandler
 import logging
 
 # Enable logging
@@ -9,10 +10,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+db_handler = DatabaseHandler('creds.json')
 updater = Updater("1115583820:AAHaMW-nuazjQvbuoovKQv8oRPVujwc2DAI", use_context=True)
 dispatcher = updater.dispatcher
-medicine = MedicineTimerBot(updater, dispatcher, 'medicine.df', 'timezone.df')
-timezone = TimeZoneHandler(updater, dispatcher, 'timezone.df')
+medicine = MedicineTimerBot(updater, dispatcher, db_handler)
+timezone = TimeZoneHandler(updater, dispatcher, db_handler)
 
 def start(update, context):
     update.message.reply_text('Hi! Welcome to medicine reminder bot.\
@@ -22,7 +24,12 @@ def start(update, context):
 
 dispatcher.add_handler(CommandHandler("start", start))
 
-
+all_reminders = db_handler.get_all_reminder()
+for reminder in all_reminders:
+    user_id, timezone, reminder_name, reminder_time = reminder
+    dtime = MedicineTimerBot.get_time_tzone(reminder_time, timezone)
+    updater.job_queue.run_daily(MedicineTimerBot.medicing_alarm, dtime.time(), context=user_id)
+    print(reminder)
 #Start the Bot
 updater.start_polling()
 

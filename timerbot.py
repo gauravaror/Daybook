@@ -37,22 +37,29 @@ class MedicineTimerBot:
         job = context.job
         context.bot.send_message(job.context, text='Time for medicine!')
 
+    @staticmethod
+    def get_time_tzone(time, zone):
+        tzone = pytz.timezone(zone)
+        dtime = datetime.strptime(time, '%H:%M')
+        dtime  = dtime.replace(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+        dtime  = tzone.localize(dtime)
+        dtime = dtime.astimezone(UTC)
+        return dtime
+
 
     def set_timer(self, update, context):
         """Add a job to the queue."""
         chat_id = update.message.chat_id
         try:
             if 'timezone' in context.chat_data:
-                tzone = pytz.timezone(context.chat_data['timezone'])
+                tzone = context.chat_data['timezone']
             else:
                 update.message.reply_text('Please set timezone using /timezone command before setting reminder.')
                 return
             # args[0] should contain the time for the timer in seconds
             reminder_name = str(context.args[0])
-            dtime = datetime.strptime(context.args[1], '%H:%M')
-            dtime  = dtime.replace(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
-            dtime  = tzone.localize(dtime)
-            dtime = dtime.astimezone(UTC)
+            dtime = MedicineTimerBot.get_time_tzone(context.args[1], tzone)
+            self.db_handler.create_reminder(chat_id, reminder_name, context.args[1])
 
             logging.info("Setting time for reminder" + str(dtime))
             #due = int(context.args[0])
@@ -81,13 +88,12 @@ class MedicineTimerBot:
 
         update.message.reply_text('Medicine reminder: ' + reminder_name + ' successfully removed!')
 
-    def __init__(self, updater, dispatcher, user_pickle, timezone_pickle):
+    def __init__(self, updater, dispatcher, db_handler):
         """Run bot."""
         # Create the Updater and pass it your bot's token.
         # Make sure to set use_context=True to use the new context based callbacks
         # Post version 12 this will no longer be necessary
-        self.user_pickle = user_pickle
-        self.timezone_pickle = timezone_pickle
+        self.db_handler = db_handler
         self.updater = updater
         #Updater("1115583820:AAHaMW-nuazjQvbuoovKQv8oRPVujwc2DAI", use_context=True)
 

@@ -39,8 +39,8 @@ def handle_cancel(update):
 
 
 class TimeZoneHandler:
-    def __init__(self, updater, dispatcher, timezone_pickle):
-        self.timezone_pickle = timezone_pickle
+    def __init__(self, updater, dispatcher, db_handler):
+        self.db_handler = db_handler
         self.updater = updater
         self.dispatcher = dispatcher
         
@@ -90,7 +90,8 @@ class TimeZoneHandler:
         if reply is None:
             timezone = self.selected_continent + "/" + update.message.text
             context.chat_data['timezone'] = timezone
-            
+            chat_id = update.message.chat_id 
+            self.db_handler.create_user(chat_id, timezone)
             update.message.reply_text('Timezone set set to: ' + timezone)
             return ConversationHandler.END
         return ConversationHandler.END
