@@ -3,8 +3,7 @@ import mariadb
 
 
 class DatabaseHandler:
-    def __init__(self, creds):
-        c = json.load(open(creds))
+    def __init__(self, c):
         try:
             conn = mariadb.connect(
                 user=c['user'],

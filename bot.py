@@ -3,6 +3,7 @@ from timerbot import MedicineTimerBot
 from timezonebot import TimeZoneHandler
 from database_handler import DatabaseHandler
 import logging
+import json
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -10,8 +11,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-db_handler = DatabaseHandler('creds.json')
-updater = Updater("1115583820:AAHaMW-nuazjQvbuoovKQv8oRPVujwc2DAI", use_context=True)
+c = json.load(open('creds.json'))
+
+db_handler = DatabaseHandler(c)
+updater = Updater(c['token'], use_context=True)
 dispatcher = updater.dispatcher
 medicine = MedicineTimerBot(updater, dispatcher, db_handler)
 timezone = TimeZoneHandler(updater, dispatcher, db_handler)
